@@ -27,9 +27,19 @@ public abstract class ColumnContainer {
 	 * @param col  the column to remove
 	 */
 	public void removeColumn(Column col) {
-		this.columns.remove(col.getName());
-		removedColumns.add(col);
+		removeColumn(col.getName());
 		setChanged(true);
+	}
+
+	/**
+	 * Removes a column from this container
+	 * @param col  the  name of column to remove
+	 */
+	public void removeColumn(String col) {
+		this.columns.remove(col);
+		removedColumns.add(new Column(col, ""));
+		setChanged(true);
+
 	}
 
 	/**
