@@ -8,6 +8,8 @@ I did this on the train over 3/4 mornings while heading to work.
 I'll review it and make some needed changes however it does currently work fine.
 
 Usage is similar to Hector's see https://github.com/rantav/hector if you want to use Hector directly.
+See the file https://github.com/zcourts/cassandra-hector-wrapper/blob/master/src/main/java/com/scriptandscroll/adt/UsageExamples.java
+for a decent set of usage examples.
 
 You start by creating a Keyspace object.
 
