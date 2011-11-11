@@ -1,0 +1,65 @@
+package com.scriptandscroll.adt;
+
+import com.scriptandscroll.exceptions.InvalidValueException;
+import java.util.ArrayList;
+import java.util.List;
+import me.prettyprint.hector.api.beans.HColumn;
+import me.prettyprint.hector.api.beans.HSuperColumn;
+
+/**
+ *
+ * @author Courtney
+ */
+public class SuperColumn extends ColumnContainer implements Savable {
+
+	private String name;
+
+	/**
+	 * Create  a super column with no sub-columns
+	 * @param name the name of the super column 
+	 * @throws InvalidValueException if name is empty or null
+	 */
+	public SuperColumn(String name) {
+		this(name, new ArrayList<Column>());
+	}
+
+	public SuperColumn(HSuperColumn<String, String, String> col) {
+		this.name = col.getName();
+		fromHectorList(col.getColumns());
+	}
+
+	public SuperColumn(String name, List<HColumn<String, String>> cols) {
+		this.name = name;
+		fromHectorList(cols);
+	}
+
+	private void fromHectorList(List<HColumn<String, String>> cols) {
+		for (HColumn<String, String> c : cols) {
+			putColumn(new Column(c));
+		}
+	}
+
+	/**
+	 * Create a super column with a list of sub columns
+	 * @param name the name of the super column within  the row
+	 * @param columns a list of sub columns to add
+	 * @throws InvalidValueException  if name is empty or null
+	 */
+	public SuperColumn(String name, ArrayList<Column> columns) {
+		if (name == null || name.isEmpty()) {
+			throw new InvalidValueException("The name of a column cannot be null or empty!");
+		}
+		this.name = name;
+		for (Column col : columns) {
+			putColumn(col);
+		}
+	}
+
+	/**
+	 * 
+	 * @return Get the name of this Super column
+	 */
+	public String getName() {
+		return name;
+	}
+}
