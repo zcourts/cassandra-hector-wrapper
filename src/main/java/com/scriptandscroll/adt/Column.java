@@ -94,4 +94,13 @@ public class Column implements Savable {
 	public void setChanged(boolean changed) {
 		isChanged = changed;
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return this.name + ":" + this.value;
+	}
+	
 }
