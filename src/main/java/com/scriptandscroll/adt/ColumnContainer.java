@@ -143,19 +143,12 @@ public abstract class ColumnContainer {
 		}
 		setChanged(true);
 	}
-	
+
 	/**
 	 * Function to tell if the column list is empty (like on creation of new row)
 	 * @return true - if empty; false - not empty
 	 */
-	public boolean isEmpty(){
-		if(this.columns.size() == 0)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+	public boolean isEmpty() {
+		return columns.isEmpty();
 	}
 }

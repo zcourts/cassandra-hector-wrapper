@@ -101,4 +101,12 @@ public abstract class SuperColumnContainer {
 		}
 		setChanged(true);
 	}
+
+	/**
+	 * 
+	 * @return true if this super column has no columns, false otherwise
+	 */
+	public boolean isEmpty() {
+		return columns.isEmpty();
+	}
 }
