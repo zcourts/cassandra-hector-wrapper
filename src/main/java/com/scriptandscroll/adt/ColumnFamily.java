@@ -6,11 +6,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import me.prettyprint.cassandra.model.IndexedSlicesQuery;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.OrderedRows;
+import me.prettyprint.hector.api.factory.HFactory;
 import static me.prettyprint.hector.api.factory.HFactory.*;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
@@ -182,6 +184,55 @@ public class ColumnFamily {
 		q.setName(columnName).setColumnFamily(getName());
 		QueryResult<HColumn<String, String>> r = q.setKey(key).execute();
 		return new Column(r.get());
+	}
+
+	/**
+	 * Get results from an Indexed row
+	 * @param columnName the name of the column to match against, e.g. date_added
+	 * @param columnValue the value of the column to compare against e.g. Jan 3 to get all Jan 3 rows form all years
+	 * @param ex The expression type, equals, less than or grater than
+	 * @param startKey an optional start key, can be an empty string
+	 * @param rowCount get up to this amount of rows
+	 * @return 
+	 */
+	public List<Row> getIndexedRow(String columnName, String columnValue, SecondaryIndexExpression ex, int rowCount, String startKey) {
+		List<Row> ret = new ArrayList<Row>();
+		IndexedSlicesQuery<String, String, String> indexedSlicesQuery = HFactory.createIndexedSlicesQuery(keyspace.getHectorKeyspace(),
+				StringSerializer.get(), StringSerializer.get(),
+				StringSerializer.get());
+
+		indexedSlicesQuery.setColumnFamily(getName());
+		indexedSlicesQuery.setColumnNames(columnName);
+		switch (ex) {
+			case EQUALS:
+				indexedSlicesQuery.addEqualsExpression(columnName, columnValue);
+				break;
+			case GREATER_THAN:
+				indexedSlicesQuery.addGteExpression(columnName, columnValue);
+				break;
+			case LESS_THAN:
+				indexedSlicesQuery.addLteExpression(columnName, columnValue);
+				break;
+		}
+		indexedSlicesQuery.setStartKey(startKey);
+		indexedSlicesQuery.setRowCount(rowCount);
+		QueryResult<OrderedRows<String, String, String>> r =
+				indexedSlicesQuery.execute();
+		OrderedRows<String, String, String> orderedrows = r.get();
+		List<me.prettyprint.hector.api.beans.Row<String, String, String>> rows = orderedrows.getList();
+		for (me.prettyprint.hector.api.beans.Row hectorRow : rows) {
+			ColumnSlice<String, String> slice = hectorRow.getColumnSlice();
+			List<HColumn<String, String>> columns = slice.getColumns();
+			try {
+				Row aRow = new Row((String) hectorRow.getKey());
+				aRow.putHectorColumns(columns);
+				ret.add(aRow);
+			} catch (InvalidValueException e) {
+				Logger.getLogger(ColumnFamily.class.getName()).log(Level.SEVERE, null, e);
+			}
+		}
+		return ret;
+
 	}
 
 	/**
