@@ -1,5 +1,6 @@
 package com.scriptandscroll.adt;
 
+import me.prettyprint.hector.api.Serializer;
 import java.util.Iterator;
 import me.prettyprint.hector.api.beans.SuperRows;
 import me.prettyprint.hector.api.query.MultigetSuperSliceQuery;
@@ -35,7 +36,7 @@ public class SuperColumnFamily {
 
 	private Keyspace keyspace;
 	private String name;
-	private StringSerializer se;
+	private Serializer se;
 	private Mutator<String> mutator;
 
 	/**
@@ -46,8 +47,15 @@ public class SuperColumnFamily {
 	public SuperColumnFamily(Keyspace ks, String name) {
 		keyspace = ks;
 		this.name = name;
-		se = keyspace.getSerializer();
-		mutator = createMutator(keyspace.getHectorKeyspace(), keyspace.getSerializer());
+		se = new StringSerializer();
+		mutator = createMutator(keyspace.getHectorKeyspace(), se);
+	}
+
+	public SuperColumnFamily(Keyspace ks, String name, Serializer s) {
+		keyspace = ks;
+		this.name = name;
+		se = s;
+		mutator = createMutator(keyspace.getHectorKeyspace(), s);
 	}
 
 	/**
@@ -297,6 +305,26 @@ public class SuperColumnFamily {
 	 * @return 
 	 */
 	public List<Column> getSubColumns(String key, String superColumn, String startSubColumn, String endSubColumn, boolean reversed, int count) {
+		return getSubColumns(key, superColumn, startSubColumn, endSubColumn, reversed, count, se, se, se, se);
+	}
+
+	/**
+	 * Get a range of sub columns within a given super column starting from startSubcolumn to endSubcolumn
+	 * @param key the row key
+	 * @param superColumn the name of the super column
+	 * @param startSubColumn the sub column to start from
+	 * @param endSubColumn the subcolumn to end at
+	 * @param reversed
+	 * @param count max sub columns to return
+	 * @param keySerializer The row key serializer
+	 * @param sNameSerializer the super column name serializer
+	 * @param nameSerializer the SUB column name serializer
+	 * @param valueSerializer the SUB column value serializer
+	 * @return 
+	 */
+	public List<Column> getSubColumns(String key, String superColumn, String startSubColumn, String endSubColumn, boolean reversed, int count, Serializer keySerializer,
+			Serializer sNameSerializer, Serializer nameSerializer,
+			Serializer valueSerializer) {
 		SubSliceQuery<String, String, String, String> q = createSubSliceQuery(keyspace.getHectorKeyspace(),
 				se, se, se, se);
 		q.setColumnFamily(getName());
@@ -333,15 +361,15 @@ public class SuperColumnFamily {
 	 * is also removed from Cassandra
 	 */
 	public void putSuperRow(SuperRow row, boolean autoremove) {
-		Mutator<String> m = createMutator(keyspace.getHectorKeyspace(), se);
+		Mutator<String> m = createMutator(keyspace.getHectorKeyspace(), row.getKeySerializer());
 		List<SuperColumn> supercols = row.getAllSuperColumns();
 		for (SuperColumn superCol : supercols) {
 			List<Column> mycols = superCol.getAllColumns();
 			List<HColumn<String, String>> cols = new ArrayList<HColumn<String, String>>();
 			for (Column col : mycols) {
-				cols.add(createColumn(col.getName(), col.getValue(), se, se));
+				cols.add(createColumn(col.getName(), col.getValue(), col.getNameSerializer(), col.getValueSerializer()));
 			}
-			HSuperColumn<String, String, String> sc = createSuperColumn(superCol.getName(), cols, se, se, se);
+			HSuperColumn<String, String, String> sc = createSuperColumn(superCol.getName(), cols, superCol.getSuperNameSerializer(), superCol.getNameSerializer(), superCol.getValueSerializer());
 			m.addInsertion(row.getKey(), getName(), sc);
 		}
 		m.execute();
@@ -356,10 +384,10 @@ public class SuperColumnFamily {
 	 * @param row the row to remove super columns from
 	 */
 	public void removeSuperColumns(SuperRow row) {
-		Mutator<String> m = createMutator(keyspace.getHectorKeyspace(), se);
+		Mutator<String> m = createMutator(keyspace.getHectorKeyspace(), row.getKeySerializer());
 		List<SuperColumn> deletedSupercolumns = row.getRemovedSuperColumns();
 		for (SuperColumn superCol : deletedSupercolumns) {
-			m.superDelete(row.getKey(), getName(), superCol.getName(), se);
+			m.superDelete(row.getKey(), getName(), superCol.getName(), superCol.getSuperNameSerializer());
 		}
 		m.execute();
 	}
@@ -369,12 +397,12 @@ public class SuperColumnFamily {
 	 * @param row the row from which to delete sub columns of the included super columns
 	 */
 	public void removeSubColumns(SuperRow row) {
-		Mutator<String> m = createMutator(keyspace.getHectorKeyspace(), se);
+		Mutator<String> m = createMutator(keyspace.getHectorKeyspace(), row.getKeySerializer());
 		List<SuperColumn> deletedSupercolumns = row.getRemovedSuperColumns();
 		for (SuperColumn superCol : deletedSupercolumns) {
 			List<Column> mycols = superCol.getRemovedColumns();
 			for (Column col : mycols) {
-				m.subDelete(row.getKey(), getName(), superCol.getName(), col.getName(), se, se);
+				m.subDelete(row.getKey(), getName(), superCol.getName(), col.getName(), superCol.getSuperNameSerializer(), col.getNameSerializer());
 			}
 		}
 		m.execute();

@@ -1,7 +1,6 @@
 package com.scriptandscroll.adt;
 
 import static me.prettyprint.hector.api.factory.HFactory.*;
-import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Cluster;
 
 /**
@@ -10,7 +9,6 @@ import me.prettyprint.hector.api.Cluster;
  */
 public class Keyspace {
 
-	private final StringSerializer se = new StringSerializer();
 	private Cluster cluster;
 	private me.prettyprint.hector.api.Keyspace keyspace;
 	//
@@ -35,9 +33,5 @@ public class Keyspace {
 
 	public me.prettyprint.hector.api.Keyspace getHectorKeyspace() {
 		return keyspace;
-	}
-
-	public StringSerializer getSerializer() {
-		return se;
 	}
 }

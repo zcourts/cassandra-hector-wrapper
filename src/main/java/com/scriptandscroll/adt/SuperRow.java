@@ -2,6 +2,8 @@ package com.scriptandscroll.adt;
 
 import com.scriptandscroll.exceptions.InvalidValueException;
 import java.util.List;
+import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.HSuperColumn;
 import me.prettyprint.hector.api.beans.SuperSlice;
 
@@ -12,6 +14,11 @@ import me.prettyprint.hector.api.beans.SuperSlice;
 public class SuperRow extends SuperColumnContainer implements Savable {
 
 	private String key;
+	private Serializer se;
+
+	private SuperRow() {
+		se = new StringSerializer();
+	}
 
 	/**
 	 * Create an empty row to which columns can be added later
@@ -19,6 +26,7 @@ public class SuperRow extends SuperColumnContainer implements Savable {
 	 * @throws InvalidValueException if key is null or empty
 	 */
 	public SuperRow(String key) {
+		this();
 		if (key == null || key.isEmpty()) {
 			throw new InvalidValueException("The key of a column cannot be null or empty!");
 		}
@@ -26,6 +34,7 @@ public class SuperRow extends SuperColumnContainer implements Savable {
 	}
 
 	public SuperRow(me.prettyprint.hector.api.beans.SuperRow<String, String, String, String> row) {
+		this();
 		SuperSlice<String, String, String> slice = row.getSuperSlice();
 		List<HSuperColumn<String, String, String>> cols = slice.getSuperColumns();
 		for (HSuperColumn<String, String, String> col : cols) {
@@ -41,6 +50,7 @@ public class SuperRow extends SuperColumnContainer implements Savable {
 	 * @throws InvalidValueException if key is null or empty
 	 */
 	public SuperRow(String key, SuperColumn col) {
+		this();
 		if (key == null || key.isEmpty()) {
 			throw new InvalidValueException("The key of a column cannot be null or empty!");
 		}
@@ -55,6 +65,7 @@ public class SuperRow extends SuperColumnContainer implements Savable {
 	 * @throws InvalidValueException if key is null or empty
 	 */
 	public SuperRow(String key, List<SuperColumn> cols) {
+		this();
 		this.key = key;
 		for (SuperColumn col : cols) {
 			putSuperColumn(col);
@@ -70,5 +81,9 @@ public class SuperRow extends SuperColumnContainer implements Savable {
 
 	public String setKey(String key) {
 		return this.key = key;
+	}
+
+	public Serializer getKeySerializer() {
+		return se;
 	}
 }

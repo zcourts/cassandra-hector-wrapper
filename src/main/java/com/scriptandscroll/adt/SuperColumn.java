@@ -3,6 +3,8 @@ package com.scriptandscroll.adt;
 import com.scriptandscroll.exceptions.InvalidValueException;
 import java.util.ArrayList;
 import java.util.List;
+import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.HSuperColumn;
 
@@ -13,6 +15,15 @@ import me.prettyprint.hector.api.beans.HSuperColumn;
 public class SuperColumn extends ColumnContainer implements Savable {
 
 	private String name;
+	private Serializer namese;
+	private Serializer supernamese;
+	private Serializer valuese;
+
+	public SuperColumn() {
+		supernamese = new StringSerializer();
+		namese = new StringSerializer();
+		valuese = new StringSerializer();
+	}
 
 	/**
 	 * Create  a super column with no sub-columns
@@ -61,5 +72,51 @@ public class SuperColumn extends ColumnContainer implements Savable {
 	 */
 	public String getName() {
 		return name;
+	}
+
+	/**
+	 * The serializer to be used on sub column names
+	 * @param s 
+	 */
+	public final void setNameSerializer(Serializer s) {
+		namese = s;
+	}
+
+	/**
+	 * Set the serializer for the super column names
+	 * @param s 
+	 */
+	public final void setSuperNameSerializer(Serializer s) {
+		supernamese = s;
+	}
+
+	/**
+	 * The serializer to be used on the sub column's values
+	 * @param s 
+	 */
+	public final void setValueSerializer(Serializer s) {
+		valuese = s;
+	}
+
+	/**
+	 * The serializer to be used on this column's name
+	 */
+	public Serializer getNameSerializer() {
+		return namese;
+	}
+
+	/**
+	 * The serializer to be used on this column's value
+	 */
+	public Serializer getValueSerializer() {
+		return valuese;
+	}
+
+	/**
+	 * get the serializer for the super column names
+	 * @param s 
+	 */
+	public final Serializer getSuperNameSerializer() {
+		return supernamese;
 	}
 }

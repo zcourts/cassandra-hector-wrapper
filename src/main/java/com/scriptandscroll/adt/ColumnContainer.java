@@ -127,6 +127,7 @@ public abstract class ColumnContainer {
 	 * Adds a new sub column to this container
 	 * @param colname the name of the column
 	 * @param value the column's value
+	 * The default Serializer is StringSerializer when using this method
 	 * @throws InvalidValueException 
 	 */
 	public void putColumn(String colname, String value) throws InvalidValueException {

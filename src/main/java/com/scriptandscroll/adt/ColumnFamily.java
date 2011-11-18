@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.OrderedRows;
@@ -25,7 +26,7 @@ public class ColumnFamily {
 
 	private Keyspace keyspace;
 	private String name;
-	private StringSerializer se;
+	private Serializer se;
 	private Mutator<String> mutator;
 
 	/**
@@ -36,8 +37,8 @@ public class ColumnFamily {
 	public ColumnFamily(Keyspace ks, String name) {
 		keyspace = ks;
 		this.name = name;
-		se = keyspace.getSerializer();
-		mutator = createMutator(keyspace.getHectorKeyspace(), keyspace.getSerializer());
+		se = new StringSerializer();
+		mutator = createMutator(keyspace.getHectorKeyspace(), se);
 	}
 
 	/**
@@ -120,7 +121,21 @@ public class ColumnFamily {
 	 * @return a list of columns retrieved
 	 */
 	public List<Column> getColumns(String key, String start, String end, boolean reversed, int count) {
-		SliceQuery<String, String, String> q = createSliceQuery(keyspace.getHectorKeyspace(), se, se, se);
+		return getColumns(key, start, end, reversed, count, se, se, se);
+	}
+
+	/**
+	 * Get a list of columns 
+	 * @param key the row key
+	 * @param start the start column name
+	 * @param end the end column name
+	 * @param reversed reversed or not
+	 * @param count how many columns to get
+	 * @return a list of columns retrieved
+	 */
+	public List<Column> getColumns(String key, String start, String end, boolean reversed, int count, Serializer keySerializer, Serializer nameSerializer, Serializer valueSerializer) {
+		SliceQuery<String, String, String> q = createSliceQuery(keyspace.getHectorKeyspace(),
+				keySerializer, nameSerializer, valueSerializer);
 		q.setColumnFamily(getName());
 		q.setKey(key);
 		q.setRange(start, end, reversed, count);
@@ -250,7 +265,7 @@ public class ColumnFamily {
 	 * @param col the column to add or update
 	 */
 	public void putColumn(String key, Column col) {
-		putColumn(key, col.getName(), col.getValue());
+		putColumn(key, col.getName(), col.getValue(), col.getNameSerializer(), col.getValueSerializer());
 	}
 
 	/**
@@ -259,8 +274,8 @@ public class ColumnFamily {
 	 * @param colName the column name
 	 * @param colVal the column value
 	 */
-	public void putColumn(String key, String colName, String colVal) {
-		mutator.addInsertion(key, getName(), createColumn(colName, colVal, se, se));
+	public void putColumn(String key, String colName, String colVal, Serializer nameS, Serializer valueS) {
+		mutator.addInsertion(key, getName(), createColumn(colName, colVal, nameS, valueS));
 		mutator.execute();
 	}
 

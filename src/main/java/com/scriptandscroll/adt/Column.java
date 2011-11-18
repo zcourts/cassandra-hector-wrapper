@@ -1,6 +1,8 @@
 package com.scriptandscroll.adt;
 
 import com.scriptandscroll.exceptions.InvalidValueException;
+import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.HColumn;
 
 /**
@@ -12,17 +14,27 @@ public class Column implements Savable {
 	private boolean isChanged;
 	private String name;
 	private String value;
+	private Serializer namese;
+	private Serializer valuese;
+
+	public Column() {
+		namese = new StringSerializer();
+		valuese = new StringSerializer();
+	}
 
 	/**
 	 * Creates a Column from a Hector column
 	 * @param hectorCol 
 	 */
 	public Column(HColumn<String, String> hectorCol) {
+		this();
 		if (hectorCol == null) {
 			return;
 		}
 		name = hectorCol.getName();
 		value = hectorCol.getValue();
+		setNameSerializer(hectorCol.getNameSerializer());
+		setValueSerializer(hectorCol.getValueSerializer());
 	}
 
 	/**
@@ -42,6 +54,7 @@ public class Column implements Savable {
 	 * @throws  InvalidValueException When the name of the column is either null or empty
 	 */
 	public Column(String name, String value) {
+		this();
 		if (name == null || name.isEmpty()) {
 			throw new InvalidValueException("The name of a column cannot be null or empty!");
 		}
@@ -102,5 +115,34 @@ public class Column implements Savable {
 	public String toString() {
 		return this.name + ":" + this.value;
 	}
-	
+
+	/**
+	 * The serializer to be used on this column's name
+	 * @param s 
+	 */
+	public final void setNameSerializer(Serializer s) {
+		namese = s;
+	}
+
+	/**
+	 * The serializer to be used on this column's value
+	 * @param s 
+	 */
+	public final void setValueSerializer(Serializer s) {
+		valuese = s;
+	}
+
+	/**
+	 * The serializer to be used on this column's name
+	 */
+	public Serializer getNameSerializer() {
+		return namese;
+	}
+
+	/**
+	 * The serializer to be used on this column's value
+	 */
+	public Serializer getValueSerializer() {
+		return valuese;
+	}
 }

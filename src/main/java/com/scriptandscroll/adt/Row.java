@@ -2,6 +2,8 @@ package com.scriptandscroll.adt;
 
 import com.scriptandscroll.exceptions.InvalidValueException;
 import java.util.List;
+import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
 
@@ -12,8 +14,17 @@ import me.prettyprint.hector.api.beans.HColumn;
 public class Row extends ColumnContainer implements Savable {
 
 	private String key;
+	private Serializer se;
+
+	private Row() {
+		se = new StringSerializer();
+	}
 
 	public Row(List<Column> columns) {
+		this();
+		for (Column c : columns) {
+			putColumn(c);
+		}
 	}
 
 	public Row(me.prettyprint.hector.api.beans.Row<String, String, String> row) {
@@ -73,5 +84,8 @@ public class Row extends ColumnContainer implements Savable {
 	public String getKey() {
 		return key;
 	}
-	
+
+	public Serializer getKeySerializer() {
+		return se;
+	}
 }
