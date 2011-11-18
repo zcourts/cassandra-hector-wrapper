@@ -367,7 +367,10 @@ public class SuperColumnFamily {
 			List<Column> mycols = superCol.getAllColumns();
 			List<HColumn<String, String>> cols = new ArrayList<HColumn<String, String>>();
 			for (Column col : mycols) {
-				cols.add(createColumn(col.getName(), col.getValue(), col.getNameSerializer(), col.getValueSerializer()));
+				cols.add(
+						createColumn(col.getNameAs(col.getNameSerializer().getClass()),
+						col.getValueAs(col.getValueSerializer().getClass()),
+						col.getNameSerializer(), col.getValueSerializer()));
 			}
 			HSuperColumn<String, String, String> sc = createSuperColumn(superCol.getName(), cols, superCol.getSuperNameSerializer(), superCol.getNameSerializer(), superCol.getValueSerializer());
 			m.addInsertion(row.getKey(), getName(), sc);
@@ -402,7 +405,7 @@ public class SuperColumnFamily {
 		for (SuperColumn superCol : deletedSupercolumns) {
 			List<Column> mycols = superCol.getRemovedColumns();
 			for (Column col : mycols) {
-				m.subDelete(row.getKey(), getName(), superCol.getName(), col.getName(), superCol.getSuperNameSerializer(), col.getNameSerializer());
+				m.subDelete(row.getKey(), getName(), superCol.getName(), col.getNameAs(col.getNameSerializer().getClass()), superCol.getSuperNameSerializer(), col.getNameSerializer());
 			}
 		}
 		m.execute();

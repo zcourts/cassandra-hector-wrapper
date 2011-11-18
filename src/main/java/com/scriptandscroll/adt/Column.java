@@ -1,7 +1,19 @@
 package com.scriptandscroll.adt;
 
 import com.scriptandscroll.exceptions.InvalidValueException;
+import java.lang.reflect.Constructor;
+import java.nio.ByteBuffer;
+import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import me.prettyprint.cassandra.serializers.BooleanSerializer;
+import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
+import me.prettyprint.cassandra.serializers.BytesArraySerializer;
+import me.prettyprint.cassandra.serializers.DateSerializer;
+import me.prettyprint.cassandra.serializers.IntegerSerializer;
+import me.prettyprint.cassandra.serializers.LongSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.cassandra.serializers.UUIDSerializer;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.HColumn;
 
@@ -74,6 +86,101 @@ public class Column implements Savable {
 	 */
 	public String getValue() {
 		return value;
+	}
+
+	/**
+	 * Get the value of this column as a type determined by its serializer.
+	 * For e.g. to get an int pass the IntegerSerializer
+	 * @param <T> The type returned
+	 * @param serializer the serializer to use to determine the type of the value 
+	 * @return 
+	 */
+	public <T> T getValueAs(Class<? extends Serializer> serializer) {
+		T type = null;
+		Object[] params = {value};
+		if (serializer.equals(UUIDSerializer.class)) {
+			//nothing yet
+		} else if (serializer.equals(StringSerializer.class)) {
+			type = (T) value;
+		} else if (serializer.equals(LongSerializer.class)) {
+			type = createObject(Long.class, params);
+		} else if (serializer.equals(IntegerSerializer.class)) {
+			type = createObject(int.class, params);
+		} else if (serializer.equals(BooleanSerializer.class)) {
+			type = createObject(boolean.class, params);
+		} else if (serializer.equals(BytesArraySerializer.class)) {
+			type = createObject(byte[].class, params);
+		} else if (serializer.equals(ByteBufferSerializer.class)) {
+			type = createObject(ByteBuffer.class, params);
+		} else if (serializer.equals(DateSerializer.class)) {
+			type = createObject(Date.class, params);
+		} else {
+			type = createObject(Object.class, params);
+		}
+		return type;
+	}
+
+	/**
+	 * Get the name of this column as a type determined by its serializer.
+	 * For e.g. to get an int pass the IntegerSerializer
+	 * @param <T> The type returned
+	 * @param serializer the serializer to use to determine the type of the name 
+	 * @return 
+	 */
+	public <T> T getNameAs(Class<? extends Serializer> serializer) {
+		T type = null;
+		Object[] params = {name};
+		if (serializer.equals(UUIDSerializer.class)) {
+			//nothing yet
+		} else if (serializer.equals(StringSerializer.class)) {
+			type = (T) name;
+		} else if (serializer.equals(LongSerializer.class)) {
+			type = createObject(Long.class, params);
+		} else if (serializer.equals(IntegerSerializer.class)) {
+			type = createObject(int.class, params);
+		} else if (serializer.equals(BooleanSerializer.class)) {
+			type = createObject(boolean.class, params);
+		} else if (serializer.equals(BytesArraySerializer.class)) {
+			type = createObject(byte[].class, params);
+		} else if (serializer.equals(ByteBufferSerializer.class)) {
+			type = createObject(ByteBuffer.class, params);
+		} else if (serializer.equals(DateSerializer.class)) {
+			type = createObject(Date.class, params);
+		} else {
+			type = createObject(Object.class, params);
+		}
+		return type;
+	}
+
+	/**
+	 * Using Java's Reflection mechanism, create an instance of the given class
+	 * with the given parameters
+	 * @param test The class which contains the tests
+	 * @param params The parameter objects to be passed to the constructor
+	 * @return T an object of type T determined by objType
+	 */
+	private <T> T createObject(Class objType, Object[] params) {
+		try {
+			Class<?> classConstructors = Class.forName(objType.getName());
+			Constructor[] allConstructors = classConstructors.getDeclaredConstructors();
+			for (Constructor ctor : allConstructors) {
+				Class<?>[] pType = ctor.getParameterTypes();
+				for (int i = 0; i < pType.length; i++) {
+					if (params.length == 0) {
+						return (T) ctor.newInstance();
+					} else {
+						try {
+							return (T) ctor.newInstance(params);
+						} catch (IllegalArgumentException iae) {
+							//occurs if parameters don't match, can ignore for now
+						}
+					}
+				}
+			}
+		} catch (Exception ex) {
+			Logger.getLogger(Column.class.getName()).log(Level.SEVERE, ex.getMessage());
+		}
+		return null;
 	}
 
 	/**

@@ -274,7 +274,9 @@ public class ColumnFamily {
 			List<Column> cols = row.getRemovedColumns();
 			if (!cols.isEmpty()) {
 				for (Column col : cols) {
-					mutator.addDeletion(row.getKey(), getName(), col.getName(), se);
+					mutator.addDeletion(row.getKey(), getName(),
+							col.getNameAs(col.getNameSerializer().getClass()),
+							col.getNameSerializer());
 				}
 			}
 			mutator.execute();
@@ -300,7 +302,10 @@ public class ColumnFamily {
 			Iterator<Column> it = row.iterator();
 			while (it.hasNext()) {
 				Column col = it.next();
-				mutator.addInsertion(row.getKey(), getName(), createColumn(col.getName(), col.getValue(), se, se));
+				mutator.addInsertion(row.getKey(), getName(),
+						createColumn(col.getNameAs(col.getNameSerializer().getClass()),
+						col.getValueAs(col.getValueSerializer().getClass()),
+						col.getNameSerializer(), col.getValueSerializer()));
 			}
 			mutator.execute();
 			if (autoRemove) {
@@ -316,7 +321,9 @@ public class ColumnFamily {
 	 * @param col the column to add or update
 	 */
 	public void putColumn(String key, Column col) {
-		putColumn(key, col.getName(), col.getValue(), col.getNameSerializer(), col.getValueSerializer());
+		putColumn(key, col.getNameAs(col.getNameSerializer().getClass()),
+				col.getValueAs(col.getValueSerializer().getClass()),
+				col.getNameSerializer(), col.getValueSerializer());
 	}
 
 	/**
@@ -325,7 +332,7 @@ public class ColumnFamily {
 	 * @param colName the column name
 	 * @param colVal the column value
 	 */
-	public void putColumn(String key, String colName, String colVal, Serializer nameS, Serializer valueS) {
+	public <N, V> void putColumn(String key, N colName, V colVal, Serializer nameS, Serializer valueS) {
 		mutator.addInsertion(key, getName(), createColumn(colName, colVal, nameS, valueS));
 		mutator.execute();
 	}
