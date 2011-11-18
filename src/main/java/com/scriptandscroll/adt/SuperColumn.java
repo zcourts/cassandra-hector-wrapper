@@ -35,11 +35,13 @@ public class SuperColumn extends ColumnContainer implements Savable {
 	}
 
 	public SuperColumn(HSuperColumn<String, String, String> col) {
+		this();
 		this.name = col.getName();
 		fromHectorList(col.getColumns());
 	}
 
 	public SuperColumn(String name, List<HColumn<String, String>> cols) {
+		this();
 		this.name = name;
 		fromHectorList(cols);
 	}
@@ -57,6 +59,7 @@ public class SuperColumn extends ColumnContainer implements Savable {
 	 * @throws InvalidValueException  if name is empty or null
 	 */
 	public SuperColumn(String name, ArrayList<Column> columns) {
+		this();
 		if (name == null || name.isEmpty()) {
 			throw new InvalidValueException("The name of a column cannot be null or empty!");
 		}
