@@ -11,9 +11,9 @@ import me.prettyprint.hector.api.beans.SuperSlice;
  *
  * @author Courtney
  */
-public class SuperRow extends SuperColumnContainer implements Savable {
+public class SuperRow<K, SN, N, V> extends SuperColumnContainer implements Savable {
 
-	private String key;
+	private K key;
 	private Serializer se;
 
 	private SuperRow() {
@@ -30,14 +30,14 @@ public class SuperRow extends SuperColumnContainer implements Savable {
 		if (key == null || key.isEmpty()) {
 			throw new InvalidValueException("The key of a column cannot be null or empty!");
 		}
-		this.key = key;
+		this.key = (K) key;
 	}
 
-	public SuperRow(me.prettyprint.hector.api.beans.SuperRow<String, String, String, String> row) {
+	public SuperRow(me.prettyprint.hector.api.beans.SuperRow<K, SN, N, V> row) {
 		this();
-		SuperSlice<String, String, String> slice = row.getSuperSlice();
-		List<HSuperColumn<String, String, String>> cols = slice.getSuperColumns();
-		for (HSuperColumn<String, String, String> col : cols) {
+		SuperSlice< SN, N, V> slice = row.getSuperSlice();
+		List<HSuperColumn< SN, N, V>> cols = slice.getSuperColumns();
+		for (HSuperColumn<SN, N, V> col : cols) {
 			putSuperColumn(new SuperColumn(col));
 		}
 		this.key = row.getKey();
@@ -49,9 +49,9 @@ public class SuperRow extends SuperColumnContainer implements Savable {
 	 * @param col
 	 * @throws InvalidValueException if key is null or empty
 	 */
-	public SuperRow(String key, SuperColumn col) {
+	public SuperRow(K key, SuperColumn col) {
 		this();
-		if (key == null || key.isEmpty()) {
+		if (key == null) {
 			throw new InvalidValueException("The key of a column cannot be null or empty!");
 		}
 		this.key = key;
@@ -64,7 +64,7 @@ public class SuperRow extends SuperColumnContainer implements Savable {
 	 * @param cols
 	 * @throws InvalidValueException if key is null or empty
 	 */
-	public SuperRow(String key, List<SuperColumn> cols) {
+	public SuperRow(K key, List<SuperColumn> cols) {
 		this();
 		this.key = key;
 		for (SuperColumn col : cols) {
@@ -76,11 +76,11 @@ public class SuperRow extends SuperColumnContainer implements Savable {
 	 * @return The row key this row object represents
 	 */
 	public String getKey() {
-		return key;
+		return (String) key;
 	}
 
-	public String setKey(String key) {
-		return this.key = key;
+	public void setKey(K key) {
+		this.key = key;
 	}
 
 	public Serializer getKeySerializer() {

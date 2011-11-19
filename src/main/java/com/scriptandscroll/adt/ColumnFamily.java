@@ -193,13 +193,23 @@ public class ColumnFamily {
 	 * @param ex The expression type, equals, less than or grater than
 	 * @param startKey an optional start key, can be an empty string
 	 * @param rowCount get up to this amount of rows
+	 * @param  equalsColumn The column name to perform an equals match against
+	 * @param equalsColumnValue the value of the column to perform an equals match against.
+	 * Unless ex is an equals comparison you must give a equalColumn and value since a range
+	 * query using > or < is only possible in combination with an =  i.e. it must be in the form
+	 * get users where column=val and match > 34
 	 * @return 
 	 */
-	public List<Row> getIndexedRow(String columnName, String columnValue, SecondaryIndexExpression ex, int rowCount, String startKey) {
+	public <K, N, V> List<Row> getIndexedRows(N columnName, V columnValue, N equalsColumn, V equalsColumnValue, SecondaryIndexExpression ex, int rowCount, K startKey) {
+		return getIndexedRows(columnName, columnValue, equalsColumn, equalsColumnValue, ex, rowCount, startKey, se, se, se);
+	}
+
+	public <K, N, V> List<Row> getIndexedRows(N columnName, V columnValue, N equalsColumn, V equalsColumnValue, SecondaryIndexExpression ex, int rowCount, K startKey,
+			Serializer keySerializer, Serializer nameSerializer, Serializer valueSerializer) {
 		List<Row> ret = new ArrayList<Row>();
-		IndexedSlicesQuery<String, String, String> indexedSlicesQuery = HFactory.createIndexedSlicesQuery(keyspace.getHectorKeyspace(),
-				StringSerializer.get(), StringSerializer.get(),
-				StringSerializer.get());
+		IndexedSlicesQuery<K, N, V> indexedSlicesQuery = HFactory.createIndexedSlicesQuery(keyspace.getHectorKeyspace(),
+				keySerializer, nameSerializer,
+				valueSerializer);
 
 		indexedSlicesQuery.setColumnFamily(getName());
 		indexedSlicesQuery.setColumnNames(columnName);
@@ -209,17 +219,19 @@ public class ColumnFamily {
 				break;
 			case GREATER_THAN:
 				indexedSlicesQuery.addGteExpression(columnName, columnValue);
+				indexedSlicesQuery.addEqualsExpression(equalsColumn, equalsColumnValue);
 				break;
 			case LESS_THAN:
 				indexedSlicesQuery.addLteExpression(columnName, columnValue);
+				indexedSlicesQuery.addEqualsExpression(equalsColumn, equalsColumnValue);
 				break;
 		}
 		indexedSlicesQuery.setStartKey(startKey);
 		indexedSlicesQuery.setRowCount(rowCount);
-		QueryResult<OrderedRows<String, String, String>> r =
+		QueryResult<OrderedRows<K, N, V>> r =
 				indexedSlicesQuery.execute();
-		OrderedRows<String, String, String> orderedrows = r.get();
-		List<me.prettyprint.hector.api.beans.Row<String, String, String>> rows = orderedrows.getList();
+		OrderedRows<K, N, V> orderedrows = r.get();
+		List<me.prettyprint.hector.api.beans.Row<K, N, V>> rows = orderedrows.getList();
 		for (me.prettyprint.hector.api.beans.Row hectorRow : rows) {
 			ColumnSlice<String, String> slice = hectorRow.getColumnSlice();
 			List<HColumn<String, String>> columns = slice.getColumns();

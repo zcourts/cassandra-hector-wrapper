@@ -12,7 +12,7 @@ import me.prettyprint.hector.api.beans.HSuperColumn;
  *
  * @author Courtney
  */
-public class SuperColumn extends ColumnContainer implements Savable {
+public class SuperColumn<SN, N, V> extends ColumnContainer implements Savable {
 
 	private String name;
 	private Serializer namese;
@@ -34,20 +34,20 @@ public class SuperColumn extends ColumnContainer implements Savable {
 		this(name, new ArrayList<Column>());
 	}
 
-	public SuperColumn(HSuperColumn<String, String, String> col) {
+	public SuperColumn(HSuperColumn<SN, N, V> col) {
 		this();
-		this.name = col.getName();
+		this.name = (String) col.getName();
 		fromHectorList(col.getColumns());
 	}
 
-	public SuperColumn(String name, List<HColumn<String, String>> cols) {
+	public SuperColumn(SN name, List<HColumn<N, V>> cols) {
 		this();
-		this.name = name;
+		this.name = (String) name;
 		fromHectorList(cols);
 	}
 
-	private void fromHectorList(List<HColumn<String, String>> cols) {
-		for (HColumn<String, String> c : cols) {
+	private void fromHectorList(List<HColumn<N, V>> cols) {
+		for (HColumn<N, V> c : cols) {
 			putColumn(new Column(c));
 		}
 	}

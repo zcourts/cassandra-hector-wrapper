@@ -33,7 +33,7 @@ import static me.prettyprint.hector.api.factory.HFactory.*;
  * @author Courtney
  */
 public class SuperColumnFamily {
-
+	
 	private Keyspace keyspace;
 	private String name;
 	private Serializer se;
@@ -50,7 +50,7 @@ public class SuperColumnFamily {
 		se = new StringSerializer();
 		mutator = createMutator(keyspace.getHectorKeyspace(), se);
 	}
-
+	
 	public SuperColumnFamily(Keyspace ks, String name, Serializer s) {
 		keyspace = ks;
 		this.name = name;
@@ -65,11 +65,22 @@ public class SuperColumnFamily {
 	 * @return A super column object with all the column's sub columns
 	 */
 	public SuperColumn getSuperColumn(String row, String column) {
-		SuperColumnQuery<String, String, String, String> q = createSuperColumnQuery(
-				keyspace.getHectorKeyspace(), se, se, se, se);
+		return getSuperColumn(row, column, se, se, se, se);
+	}
+	
+	public <K, SN, N, V> SuperColumn getSuperColumn(K row, SN column,
+			Serializer keySerializer,
+			Serializer superColNameSerializer,
+			Serializer subColNameSerializer,
+			Serializer subColValSeralizer) {
+		SuperColumnQuery<K, SN, N, V> q = createSuperColumnQuery(
+				keyspace.getHectorKeyspace(), keySerializer,
+				superColNameSerializer,
+				subColNameSerializer,
+				subColValSeralizer);
 		q.setSuperName(column).setColumnFamily(getName());
-		QueryResult<HSuperColumn<String, String, String>> r = q.setKey(row).execute();
-		HSuperColumn<String, String, String> sc = r.get();
+		QueryResult<HSuperColumn<SN, N, V>> r = q.setKey(row).execute();
+		HSuperColumn<SN, N, V> sc = r.get();
 		return new SuperColumn(column, sc.getColumns());
 	}
 
@@ -81,50 +92,73 @@ public class SuperColumnFamily {
 	 * @return the sub column requested
 	 */
 	public Column getSubColumn(String row, String column, String subColumn) {
-		SubColumnQuery<String, String, String, String> q =
-				createSubColumnQuery(keyspace.getHectorKeyspace(), se, se, se, se);
+		return getSubColumn(row, column, subColumn, se, se, se, se);
+	}
+	
+	public <K, SN, N, V> Column getSubColumn(K row, SN column, N subColumn,
+			Serializer keySerializer, Serializer superColNameSerializer, Serializer subColNameSerializer, Serializer subColValSeralizer) {
+		SubColumnQuery<K, SN, N, V> q =
+				createSubColumnQuery(keyspace.getHectorKeyspace(),
+				keySerializer,
+				superColNameSerializer,
+				subColNameSerializer,
+				subColValSeralizer);
 		q.setSuperColumn(column).setColumn(subColumn).setColumnFamily(getName());
-		QueryResult<HColumn<String, String>> r = q.setKey(row).execute();
-		HColumn<String, String> c = r.get();
+		QueryResult<HColumn<N, V>> r = q.setKey(row).execute();
+		HColumn<N, V> c = r.get();
 		if (c == null) {
 			return null;
 		} else {
 			return new Column(c);
 		}
 	}
-
+	
 	public List<SuperColumn> getSuperColumns(String row, String[] columns) {
+		return getSuperColumns(row, columns, se, se, se, se);
+	}
+	
+	public <K, SN, N, V> List<SuperColumn> getSuperColumns(K row, SN[] columns,
+			Serializer keySerializer, Serializer superColNameSerializer, Serializer subColNameSerializer, Serializer subColValSeralizer) {
 		List<SuperColumn> ret = new ArrayList<SuperColumn>();
-		SuperSliceQuery<String, String, String, String> q = createSuperSliceQuery(
-				keyspace.getHectorKeyspace(), se, se, se, se);
+		SuperSliceQuery<K, SN, N, V> q = createSuperSliceQuery(
+				keyspace.getHectorKeyspace(), keySerializer, superColNameSerializer,
+				subColNameSerializer, subColValSeralizer);
 		q.setColumnFamily(getName());
 		q.setKey(row);
 		q.setColumnNames(columns);
-		QueryResult<SuperSlice<String, String, String>> r = q.execute();
-		SuperSlice<String, String, String> slice = r.get();
-		List<HSuperColumn<String, String, String>> cols = slice.getSuperColumns();
-		for (HSuperColumn<String, String, String> col : cols) {
+		QueryResult<SuperSlice< SN, N, V>> r = q.execute();
+		SuperSlice< SN, N, V> slice = r.get();
+		List<HSuperColumn<SN, N, V>> cols = slice.getSuperColumns();
+		for (HSuperColumn<SN, N, V> col : cols) {
 			ret.add(new SuperColumn(col));
 		}
 		return ret;
 	}
-
+	
 	public List<SuperColumn> getSuperColumns(String row, String start, String end, boolean reversed, int count) {
+		return getSuperColumns(row, start, end, reversed, count, se, se, se, se);
+	}
+	
+	public <K, SN, N, V> List<SuperColumn> getSuperColumns(K row, SN start, SN end, boolean reversed, int count,
+			Serializer keySerializer, Serializer superColNameSerializer, Serializer subColNameSerializer, Serializer subColValSeralizer) {
 		List<SuperColumn> ret = new ArrayList<SuperColumn>();
-		SuperSliceQuery<String, String, String, String> q = createSuperSliceQuery(
-				keyspace.getHectorKeyspace(), se, se, se, se);
+		SuperSliceQuery<K, SN, N, V> q = createSuperSliceQuery(
+				keyspace.getHectorKeyspace(), keySerializer,
+				superColNameSerializer,
+				subColNameSerializer,
+				subColValSeralizer);
 		q.setColumnFamily(getName());
 		q.setKey(row);
 		q.setRange(start, end, reversed, count);
-		QueryResult<SuperSlice<String, String, String>> r = q.execute();
-		SuperSlice<String, String, String> slice = r.get();
-		List<HSuperColumn<String, String, String>> cols = slice.getSuperColumns();
-		for (HSuperColumn<String, String, String> col : cols) {
+		QueryResult<SuperSlice<SN, N, V>> r = q.execute();
+		SuperSlice<SN, N, V> slice = r.get();
+		List<HSuperColumn<SN, N, V>> cols = slice.getSuperColumns();
+		for (HSuperColumn<SN, N, V> col : cols) {
 			ret.add(new SuperColumn(col));
 		}
 		return ret;
 	}
-
+	
 	public SuperRow getSuperRow(String key, String[] columns) {
 		try {
 			return new SuperRow(key, getSuperColumns(key, columns));
@@ -133,15 +167,15 @@ public class SuperColumnFamily {
 			return null;
 		}
 	}
-
+	
 	public SuperRow getSuperRow(String row, String start, String end) {
 		return getSuperRow(row, start, end, false, 10);
 	}
-
+	
 	public SuperRow getSuperRow(String row, String start, String end, boolean reversed) {
 		return getSuperRow(row, start, end, reversed, 10);
 	}
-
+	
 	public SuperRow getSuperRow(String row, String start, String end, boolean reversed, int count) {
 		try {
 			return new SuperRow(row, getSuperColumns(row, start, end, reversed, count));
@@ -165,17 +199,28 @@ public class SuperColumnFamily {
 	 * @return 
 	 */
 	public List<SuperRow> getSuperRows(String startKey, String endKey, String startColumn, String endColumn, boolean reversed, int rowCount, int colCount) {
+		return getSuperRows(startKey, endKey, startColumn, endColumn, reversed, rowCount, colCount, se, se, se, se);
+	}
+	
+	public <K, SN, N, V> List<SuperRow> getSuperRows(K startKey, K endKey, SN startColumn, SN endColumn, boolean reversed, int rowCount, int colCount,
+			Serializer keySerializer,
+			Serializer superColNameSerializer,
+			Serializer subColNameSerializer,
+			Serializer subColValSeralizer) {
 		List<SuperRow> ret = new ArrayList<SuperRow>();
-		RangeSuperSlicesQuery<String, String, String, String> q = createRangeSuperSlicesQuery(
-				keyspace.getHectorKeyspace(), se, se, se, se);
+		RangeSuperSlicesQuery<K, SN, N, V> q = createRangeSuperSlicesQuery(
+				keyspace.getHectorKeyspace(), keySerializer,
+				superColNameSerializer,
+				subColNameSerializer,
+				subColValSeralizer);
 		q.setColumnFamily(getName());
 		q.setKeys(startKey, endKey);
 		q.setRowCount(rowCount);
 		q.setRange(startColumn, endColumn, reversed, colCount);
-		QueryResult<OrderedSuperRows<String, String, String, String>> r = q.execute();
-		OrderedSuperRows<String, String, String, String> rows = r.get();
-		List<me.prettyprint.hector.api.beans.SuperRow<String, String, String, String>> rowList = rows.getList();
-		for (me.prettyprint.hector.api.beans.SuperRow<String, String, String, String> row : rowList) {
+		QueryResult<OrderedSuperRows<K, SN, N, V>> r = q.execute();
+		OrderedSuperRows<K, SN, N, V> rows = r.get();
+		List<me.prettyprint.hector.api.beans.SuperRow<K, SN, N, V>> rowList = rows.getList();
+		for (me.prettyprint.hector.api.beans.SuperRow<K, SN, N, V> row : rowList) {
 			ret.add(new SuperRow(row));
 		}
 		return ret;
@@ -189,9 +234,21 @@ public class SuperColumnFamily {
 	 * @return a list of row one for each key in the given collection
 	 */
 	public List<SuperRow> getSuperRows(Collection<String> keys, String startKey, String endKey) {
+		return getSuperRows(keys, startKey, endKey, se, se, se, se);
+	}
+	
+	public List<SuperRow> getSuperRows(Collection<String> keys, String startKey, String endKey,
+			Serializer keySerializer,
+			Serializer superColNameSerializer,
+			Serializer subColNameSerializer,
+			Serializer subColValSeralizer) {
 		// get value
 		MultigetSuperSliceQuery<String, String, String, String> q = createMultigetSuperSliceQuery(
-				keyspace.getHectorKeyspace(), se, se, se, se);
+				keyspace.getHectorKeyspace(),
+				keySerializer,
+				superColNameSerializer,
+				subColNameSerializer,
+				subColValSeralizer);
 		q.setColumnFamily(getName());
 		q.setKeys(keys);
 		// try with column name first
@@ -214,9 +271,21 @@ public class SuperColumnFamily {
 	 * @return 
 	 */
 	public List<SuperRow> getSuperRows(String startKey, String endKey, String[] columns, int rowCount) {
+		return getSuperRows(startKey, endKey, columns, rowCount, se, se, se, se);
+	}
+	
+	public List<SuperRow> getSuperRows(String startKey, String endKey, String[] columns, int rowCount,
+			Serializer keySerializer,
+			Serializer superColNameSerializer,
+			Serializer subColNameSerializer,
+			Serializer subColValSeralizer) {
 		List<SuperRow> ret = new ArrayList<SuperRow>();
 		RangeSuperSlicesQuery<String, String, String, String> q = createRangeSuperSlicesQuery(
-				keyspace.getHectorKeyspace(), se, se, se, se);
+				keyspace.getHectorKeyspace(),
+				keySerializer,
+				superColNameSerializer,
+				subColNameSerializer,
+				subColValSeralizer);
 		q.setColumnFamily(getName());
 		q.setKeys(startKey, endKey);
 		q.setColumnNames(columns);
@@ -242,9 +311,23 @@ public class SuperColumnFamily {
 	 * @param count
 	 * @return a list of rows containing all the sub columns
 	 */
-	public List<Row> getSubColumnsFromMultipleRows(Collection<String> keys, String superColumn, String startSubColumn, String endSubColumn, boolean reversed, int count) {
+	public List<Row> getSubColumnsFromMultipleRows(Collection<String> keys,
+			String superColumn, String startSubColumn,
+			String endSubColumn, boolean reversed, int count) {
+		return getSubColumnsFromMultipleRows(keys, superColumn, startSubColumn, endSubColumn, reversed, count, se, se, se, se);
+	}
+	
+	public List<Row> getSubColumnsFromMultipleRows(Collection<String> keys, String superColumn, String startSubColumn, String endSubColumn, boolean reversed, int count,
+			Serializer keySerializer,
+			Serializer superColNameSerializer,
+			Serializer subColNameSerializer,
+			Serializer subColValSeralizer) {
 		MultigetSubSliceQuery<String, String, String, String> q = createMultigetSubSliceQuery(
-				keyspace.getHectorKeyspace(), se, se, se, se);
+				keyspace.getHectorKeyspace(),
+				keySerializer,
+				superColNameSerializer,
+				subColNameSerializer,
+				subColValSeralizer);
 		q.setColumnFamily(getName());
 		q.setSuperColumn(superColumn);
 		q.setKeys(keys);
@@ -268,9 +351,21 @@ public class SuperColumnFamily {
 	 * @param count
 	 * @return A list of super rows containing the requested super columns and their sub columns
 	 */
-	public List<SuperRow> getMultipleSuperSlices(Collection<String> keys, String startColumn, String endColumn, boolean reversed, int count) {
+	public List<SuperRow> getMultipleSuperSlices(Collection keys, String startColumn, String endColumn, boolean reversed, int count) {
+		return getMultipleSuperSlices(keys, startColumn, endColumn, reversed, count, se, se, se, se);
+	}
+	
+	public List<SuperRow> getMultipleSuperSlices(Collection keys, String startColumn, String endColumn, boolean reversed, int count,
+			Serializer keySerializer,
+			Serializer superColNameSerializer,
+			Serializer subColNameSerializer,
+			Serializer subColValSeralizer) {
 		MultigetSuperSliceQuery<String, String, String, String> q = createMultigetSuperSliceQuery(
-				keyspace.getHectorKeyspace(), se, se, se, se);
+				keyspace.getHectorKeyspace(),
+				keySerializer,
+				superColNameSerializer,
+				subColNameSerializer,
+				subColValSeralizer);
 		q.setColumnFamily(getName());
 		q.setKeys(keys);
 		// try with column name first
@@ -285,11 +380,11 @@ public class SuperColumnFamily {
 		}
 		return ret;
 	}
-
+	
 	public List<Column> getSubColumns(String key, String superColumn, String startSubColumn, String endSubColumn) {
 		return getSubColumns(key, superColumn, startSubColumn, endSubColumn, false, 10);
 	}
-
+	
 	public List<Column> getSubColumns(String key, String superColumn, String startSubColumn, String endSubColumn, boolean reversed) {
 		return getSubColumns(key, superColumn, startSubColumn, endSubColumn, reversed, 10);
 	}
@@ -326,7 +421,7 @@ public class SuperColumnFamily {
 			Serializer sNameSerializer, Serializer nameSerializer,
 			Serializer valueSerializer) {
 		SubSliceQuery<String, String, String, String> q = createSubSliceQuery(keyspace.getHectorKeyspace(),
-				se, se, se, se);
+				keySerializer, sNameSerializer, nameSerializer, valueSerializer);
 		q.setColumnFamily(getName());
 		q.setSuperColumn(superColumn);
 		q.setKey(key);
@@ -340,7 +435,7 @@ public class SuperColumnFamily {
 		}
 		return ret;
 	}
-
+	
 	public String getName() {
 		return name;
 	}

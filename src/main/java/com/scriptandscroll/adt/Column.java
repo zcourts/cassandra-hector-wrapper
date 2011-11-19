@@ -21,11 +21,11 @@ import me.prettyprint.hector.api.beans.HColumn;
  *
  * @author Courtney
  */
-public class Column implements Savable {
+public class Column<N, V> implements Savable {
 
 	private boolean isChanged;
-	private String name;
-	private String value;
+	private N name;
+	private V value;
 	private Serializer namese;
 	private Serializer valuese;
 
@@ -38,7 +38,7 @@ public class Column implements Savable {
 	 * Creates a Column from a Hector column
 	 * @param hectorCol 
 	 */
-	public Column(HColumn<String, String> hectorCol) {
+	public Column(HColumn<N, V> hectorCol) {
 		this();
 		if (hectorCol == null) {
 			return;
@@ -70,22 +70,22 @@ public class Column implements Savable {
 		if (name == null || name.isEmpty()) {
 			throw new InvalidValueException("The name of a column cannot be null or empty!");
 		}
-		this.name = name;
-		this.value = value;
+		this.name = (N) name;
+		this.value = (V) value;
 	}
 
 	/**
 	 * @return The name of this column
 	 */
 	public String getName() {
-		return name;
+		return (String) name;
 	}
 
 	/**
 	 * @return The value for this column
 	 */
 	public String getValue() {
-		return value;
+		return (String) value;
 	}
 
 	/**
@@ -95,7 +95,7 @@ public class Column implements Savable {
 	 * @param serializer the serializer to use to determine the type of the value 
 	 * @return 
 	 */
-	public <T> T getValueAs(Class<? extends Serializer> serializer) {
+	public <T> T getValueAs(Class<T> serializer) {
 		T type = null;
 		Object[] params = {value};
 		if (serializer.equals(UUIDSerializer.class)) {
@@ -127,7 +127,7 @@ public class Column implements Savable {
 	 * @param serializer the serializer to use to determine the type of the name 
 	 * @return 
 	 */
-	public <T> T getNameAs(Class<? extends Serializer> serializer) {
+	public <T> T getNameAs(Class<T> serializer) {
 		T type = null;
 		Object[] params = {name};
 		if (serializer.equals(UUIDSerializer.class)) {
@@ -187,7 +187,7 @@ public class Column implements Savable {
 	 * @param name Set the column's name
 	 */
 	public void setName(String name) {
-		this.name = name;
+		this.name = (N) name;
 		setChanged(true);
 	}
 
@@ -195,7 +195,7 @@ public class Column implements Savable {
 	 * @param value The column's value
 	 */
 	public void setValue(String value) {
-		this.value = value;
+		this.value = (V) value;
 		setChanged(true);
 	}
 
@@ -251,5 +251,9 @@ public class Column implements Savable {
 	 */
 	public Serializer getValueSerializer() {
 		return valuese;
+	}
+
+	public void setValue(V i) {
+		value=i;
 	}
 }
