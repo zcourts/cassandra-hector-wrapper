@@ -4,6 +4,7 @@ import com.scriptandscroll.exceptions.InvalidValueException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import me.prettyprint.cassandra.model.IndexedSlicesQuery;
@@ -188,43 +189,47 @@ public class ColumnFamily {
 
 	/**
 	 * Get results from an Indexed row
-	 * @param columnName the name of the column to match against, e.g. date_added
-	 * @param columnValue the value of the column to compare against e.g. Jan 3 to get all Jan 3 rows form all years
-	 * @param ex The expression type, equals, less than or grater than
+	 * @param columnNames the name of the columns to return
+	 * @param query The expression type, equals, less than and/or grater than
 	 * @param startKey an optional start key, can be an empty string
 	 * @param rowCount get up to this amount of rows
-	 * @param  equalsColumn The column name to perform an equals match against
-	 * @param equalsColumnValue the value of the column to perform an equals match against.
-	 * Unless ex is an equals comparison you must give a equalColumn and value since a range
-	 * query using > or < is only possible in combination with an =  i.e. it must be in the form
-	 * get users where column=val and match > 34
 	 * @return 
 	 */
-	public <K, N, V> List<Row> getIndexedRows(N columnName, V columnValue, N equalsColumn, V equalsColumnValue, SecondaryIndexExpression ex, int rowCount, K startKey) {
-		return getIndexedRows(columnName, columnValue, equalsColumn, equalsColumnValue, ex, rowCount, startKey, se, se, se);
-	}
-
-	public <K, N, V> List<Row> getIndexedRows(N columnName, V columnValue, N equalsColumn, V equalsColumnValue, SecondaryIndexExpression ex, int rowCount, K startKey,
+	public <K, N, V> List<Row> getIndexedRows(N[] columnNames, IndexQueryBuilder query, int rowCount, K startKey,
 			Serializer keySerializer, Serializer nameSerializer, Serializer valueSerializer) {
 		List<Row> ret = new ArrayList<Row>();
-		IndexedSlicesQuery<K, N, V> indexedSlicesQuery = HFactory.createIndexedSlicesQuery(keyspace.getHectorKeyspace(),
+		IndexedSlicesQuery indexedSlicesQuery = HFactory.createIndexedSlicesQuery(keyspace.getHectorKeyspace(),
 				keySerializer, nameSerializer,
 				valueSerializer);
 
 		indexedSlicesQuery.setColumnFamily(getName());
-		indexedSlicesQuery.setColumnNames(columnName);
-		switch (ex) {
-			case EQUALS:
-				indexedSlicesQuery.addEqualsExpression(columnName, columnValue);
-				break;
-			case GREATER_THAN:
-				indexedSlicesQuery.addGteExpression(columnName, columnValue);
-				indexedSlicesQuery.addEqualsExpression(equalsColumn, equalsColumnValue);
-				break;
-			case LESS_THAN:
-				indexedSlicesQuery.addLteExpression(columnName, columnValue);
-				indexedSlicesQuery.addEqualsExpression(equalsColumn, equalsColumnValue);
-				break;
+		indexedSlicesQuery.setColumnNames(columnNames);
+		ListIterator<Column> equals = query.equalsIterator();
+		while (equals.hasNext()) {
+			Column col = equals.next();
+			indexedSlicesQuery.addEqualsExpression(
+					col.getNameAs(col.getNameSerializer().getClass()),
+					col.getValueAs(col.getValueSerializer().getClass()));
+		}
+		ListIterator<Column> lessthan = query.lessThanIterator();
+		while (lessthan.hasNext()) {
+			Column col = lessthan.next();
+			indexedSlicesQuery.addLteExpression(
+					col.getNameAs(col.getNameSerializer().getClass()),
+					col.getValueAs(col.getValueSerializer().getClass()));
+			indexedSlicesQuery.addEqualsExpression(
+					col.getNameAs(col.getNameSerializer().getClass()),
+					col.getValueAs(col.getValueSerializer().getClass()));
+		}
+		ListIterator<Column> greaterthan = query.equalsIterator();
+		while (greaterthan.hasNext()) {
+			Column col = greaterthan.next();
+			indexedSlicesQuery.addGteExpression(
+					col.getNameAs(col.getNameSerializer().getClass()),
+					col.getValueAs(col.getValueSerializer().getClass()));
+			indexedSlicesQuery.addEqualsExpression(
+					col.getNameAs(col.getNameSerializer().getClass()),
+					col.getValueAs(col.getValueSerializer().getClass()));
 		}
 		indexedSlicesQuery.setStartKey(startKey);
 		indexedSlicesQuery.setRowCount(rowCount);

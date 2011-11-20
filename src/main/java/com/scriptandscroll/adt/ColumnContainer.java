@@ -131,6 +131,9 @@ public abstract class ColumnContainer {
 	 * @throws InvalidValueException 
 	 */
 	public void putColumn(String colname, String value) throws InvalidValueException {
+		if (colname == null | value == null) {
+			return;
+		}
 		putColumn(new Column(colname, value));
 	}
 

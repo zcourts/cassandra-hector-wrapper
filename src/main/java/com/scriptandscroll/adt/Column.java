@@ -12,6 +12,7 @@ import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.DateSerializer;
 import me.prettyprint.cassandra.serializers.IntegerSerializer;
 import me.prettyprint.cassandra.serializers.LongSerializer;
+import me.prettyprint.cassandra.serializers.SerializerTypeInferer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.serializers.UUIDSerializer;
 import me.prettyprint.hector.api.Serializer;
@@ -57,6 +58,34 @@ public class Column<N, V> implements Savable {
 	 */
 	public Column(String name) {
 		this(name, null);
+	}
+
+	public Column(N name, V value) {
+		this("" + name, "" + value);
+		setNameSerializer(SerializerTypeInferer.getSerializer(name));
+		setValueSerializer(SerializerTypeInferer.getSerializer(value));
+	}
+
+	/**
+	 * Wraps Column(String name,String value) and sets the column's value
+	 * serializer to the IntegerSerializer type
+	 * @param name the column name
+	 * @param value the int value of the column
+	 */
+	public Column(String name, int value) {
+		this(name, "" + value);
+		setValueSerializer(SerializerTypeInferer.getSerializer(value));
+	}
+
+	/**
+	 * Wraps Column(String name,String value) and sets the column's value
+	 * serializer to the LongSerializer type
+	 * @param name the column name
+	 * @param value the long value of the column
+	 */
+	public Column(String name, long value) {
+		this(name, "" + value);
+		setValueSerializer(SerializerTypeInferer.getSerializer(value));
 	}
 
 	/**
@@ -254,6 +283,6 @@ public class Column<N, V> implements Savable {
 	}
 
 	public void setValue(V i) {
-		value=i;
+		value = i;
 	}
 }
