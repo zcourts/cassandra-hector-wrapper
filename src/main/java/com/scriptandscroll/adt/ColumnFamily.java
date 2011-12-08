@@ -188,6 +188,18 @@ public class ColumnFamily {
 	}
 
 	/**
+	 * Get results from an Indexed row, assumes all column serializers {row key,column  name,column value} are strings
+	 * @param columnNames the name of the columns to return
+	 * @param query The expression type, equals, less than and/or grater than
+	 * @param startKey an optional start key, can be an empty string
+	 * @param rowCount get up to this amount of rows
+	 * @return 
+	 */
+	public <K, N, V> List<Row> getIndexedRows(N[] columnNames, IndexQueryBuilder query, int rowCount, K startKey) {
+		return getIndexedRows(columnNames, query, rowCount, startKey, se, se, se);
+	}
+
+	/**
 	 * Get results from an Indexed row
 	 * @param columnNames the name of the columns to return
 	 * @param query The expression type, equals, less than and/or grater than

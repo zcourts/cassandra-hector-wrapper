@@ -102,6 +102,9 @@ public abstract class ColumnContainer {
 	 * @return the String alue of the given column
 	 */
 	public String getColumnValue(String name) {
+		if (columns.get(name) == null) {
+			return "";
+		}
 		return columns.get(name).getValue();
 	}
 

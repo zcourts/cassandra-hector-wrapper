@@ -3,7 +3,11 @@ package com.scriptandscroll.adt;
 import com.scriptandscroll.exceptions.InvalidValueException;
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.Date;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import me.prettyprint.cassandra.serializers.BooleanSerializer;
@@ -117,6 +121,38 @@ public class Column<N, V> implements Savable {
 		return (String) value;
 	}
 
+	public String getLongAsString() {
+		return deserializeLong((Long) value);
+	}
+
+	/**
+	 * Get the name of this column as the type determined by its serializer
+	 * @return 
+	 */
+	public N getTypedName() {
+		return name;
+	}
+
+	/**
+	 * Get the value of this column as the type determined by its serializer
+	 * @return 
+	 */
+	public V getTypedValue() {
+		return value;
+	}
+
+	private String deserializeLong(long val) {
+		try {
+			ByteBuffer bf = LongSerializer.get().toByteBuffer(val);
+			Charset charset = Charset.forName("ISO-8859-1");
+			CharsetDecoder decoder = charset.newDecoder();
+			return decoder.decode(bf).toString();
+		} catch (CharacterCodingException ex) {
+			Logger.getLogger(Column.class.getName()).log(Level.SEVERE, ex.getMessage());
+			return "";
+		}
+	}
+
 	/**
 	 * Get the value of this column as a type determined by its serializer.
 	 * For e.g. to get an int pass the IntegerSerializer
@@ -127,21 +163,21 @@ public class Column<N, V> implements Savable {
 	public <T> T getValueAs(Class<T> serializer) {
 		T type = null;
 		Object[] params = {value};
-		if (serializer.equals(UUIDSerializer.class)) {
+		if (serializer.equals(UUIDSerializer.class) || serializer.equals(UUID.class)) {
 			//nothing yet
-		} else if (serializer.equals(StringSerializer.class)) {
+		} else if (serializer.equals(StringSerializer.class) || serializer.equals(String.class)) {
 			type = (T) value;
-		} else if (serializer.equals(LongSerializer.class)) {
+		} else if (serializer.equals(LongSerializer.class) || serializer.equals(Long.class)) {
 			type = createObject(Long.class, params);
-		} else if (serializer.equals(IntegerSerializer.class)) {
-			type = createObject(int.class, params);
-		} else if (serializer.equals(BooleanSerializer.class)) {
-			type = createObject(boolean.class, params);
-		} else if (serializer.equals(BytesArraySerializer.class)) {
-			type = createObject(byte[].class, params);
-		} else if (serializer.equals(ByteBufferSerializer.class)) {
+		} else if (serializer.equals(IntegerSerializer.class) || serializer.equals(Integer.class)) {
+			type = createObject(Integer.class, params);
+		} else if (serializer.equals(BooleanSerializer.class) || serializer.equals(Boolean.class)) {
+			type = createObject(Boolean.class, params);
+		} else if (serializer.equals(BytesArraySerializer.class) || serializer.equals(Byte[].class)) {
+			type = createObject(Byte[].class, params);
+		} else if (serializer.equals(ByteBufferSerializer.class) || serializer.equals(Byte.class)) {
 			type = createObject(ByteBuffer.class, params);
-		} else if (serializer.equals(DateSerializer.class)) {
+		} else if (serializer.equals(DateSerializer.class) || serializer.equals(Date.class)) {
 			type = createObject(Date.class, params);
 		} else {
 			type = createObject(Object.class, params);
@@ -159,21 +195,21 @@ public class Column<N, V> implements Savable {
 	public <T> T getNameAs(Class<T> serializer) {
 		T type = null;
 		Object[] params = {name};
-		if (serializer.equals(UUIDSerializer.class)) {
+		if (serializer.equals(UUIDSerializer.class) || serializer.equals(UUID.class)) {
 			//nothing yet
-		} else if (serializer.equals(StringSerializer.class)) {
+		} else if (serializer.equals(StringSerializer.class) || serializer.equals(String.class)) {
 			type = (T) name;
-		} else if (serializer.equals(LongSerializer.class)) {
+		} else if (serializer.equals(LongSerializer.class) || serializer.equals(Long.class)) {
 			type = createObject(Long.class, params);
-		} else if (serializer.equals(IntegerSerializer.class)) {
-			type = createObject(int.class, params);
-		} else if (serializer.equals(BooleanSerializer.class)) {
-			type = createObject(boolean.class, params);
-		} else if (serializer.equals(BytesArraySerializer.class)) {
-			type = createObject(byte[].class, params);
-		} else if (serializer.equals(ByteBufferSerializer.class)) {
+		} else if (serializer.equals(IntegerSerializer.class) || serializer.equals(Integer.class)) {
+			type = createObject(Integer.class, params);
+		} else if (serializer.equals(BooleanSerializer.class) || serializer.equals(Boolean.class)) {
+			type = createObject(Boolean.class, params);
+		} else if (serializer.equals(BytesArraySerializer.class) || serializer.equals(Byte[].class)) {
+			type = createObject(Byte[].class, params);
+		} else if (serializer.equals(ByteBufferSerializer.class) || serializer.equals(Byte.class)) {
 			type = createObject(ByteBuffer.class, params);
-		} else if (serializer.equals(DateSerializer.class)) {
+		} else if (serializer.equals(DateSerializer.class) || serializer.equals(Date.class)) {
 			type = createObject(Date.class, params);
 		} else {
 			type = createObject(Object.class, params);
