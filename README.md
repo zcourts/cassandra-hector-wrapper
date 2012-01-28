@@ -21,7 +21,7 @@ You start by creating a Keyspace object.
 Keyspace ks=new Keyspace("clusterName", "keyspaceName", "localhost:9160") ;
 
 //then a column or super column family object
-ColumnFamily cf= new ColumnFamily(ks,"columnFamilyName);
+ColumnFamily cf= new ColumnFamily(ks,"columnFamilyName");
 
 //now the magic happens, you simple do cf.get[column|columns|row,rows]
 Row row= cf.Row getRow("rowKey", "startColumn", "endColumn");
