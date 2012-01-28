@@ -14,7 +14,10 @@ See the file https://github.com/zcourts/cassandra-hector-wrapper/blob/master/src
 for a decent set of usage examples.
 
 You start by creating a Keyspace object.
+
+
 ```java
+
 Keyspace ks=new Keyspace("clusterName", "keyspaceName", "localhost:9160") ;
 
 //then a column or super column family object
