@@ -41,7 +41,7 @@ public class Column<N, V> implements Savable {
 
 	/**
 	 * Creates a Column from a Hector column
-	 * @param hectorCol 
+	 * @param hectorCol
 	 */
 	public Column(HColumn<N, V> hectorCol) {
 		this();
@@ -55,7 +55,7 @@ public class Column<N, V> implements Savable {
 	}
 
 	/**
-	 * Create a column who's value can be set later or if left unset 
+	 * Create a column who's value can be set later or if left unset
 	 * a column is created with an empty string as its value
 	 * @param name the column name
 	 * @throws  InvalidValueException When the name of the column is either null or empty
@@ -127,7 +127,7 @@ public class Column<N, V> implements Savable {
 
 	/**
 	 * Get the name of this column as the type determined by its serializer
-	 * @return 
+	 * @return
 	 */
 	public N getTypedName() {
 		return name;
@@ -135,7 +135,7 @@ public class Column<N, V> implements Savable {
 
 	/**
 	 * Get the value of this column as the type determined by its serializer
-	 * @return 
+	 * @return
 	 */
 	public V getTypedValue() {
 		return value;
@@ -157,14 +157,14 @@ public class Column<N, V> implements Savable {
 	 * Get the value of this column as a type determined by its serializer.
 	 * For e.g. to get an int pass the IntegerSerializer
 	 * @param <T> The type returned
-	 * @param serializer the serializer to use to determine the type of the value 
-	 * @return 
+	 * @param serializer the serializer to use to determine the type of the value
+	 * @return
 	 */
 	public <T> T getValueAs(Class<T> serializer) {
 		T type = null;
 		Object[] params = {value};
 		if (serializer.equals(UUIDSerializer.class) || serializer.equals(UUID.class)) {
-			//nothing yet
+			type= (T) UUID.fromString(name.toString());
 		} else if (serializer.equals(StringSerializer.class) || serializer.equals(String.class)) {
 			type = (T) value;
 		} else if (serializer.equals(LongSerializer.class) || serializer.equals(Long.class)) {
@@ -189,14 +189,14 @@ public class Column<N, V> implements Savable {
 	 * Get the name of this column as a type determined by its serializer.
 	 * For e.g. to get an int pass the IntegerSerializer
 	 * @param <T> The type returned
-	 * @param serializer the serializer to use to determine the type of the name 
-	 * @return 
+	 * @param serializer the serializer to use to determine the type of the name
+	 * @return
 	 */
 	public <T> T getNameAs(Class<T> serializer) {
 		T type = null;
 		Object[] params = {name};
 		if (serializer.equals(UUIDSerializer.class) || serializer.equals(UUID.class)) {
-			//nothing yet
+			type= (T) UUID.fromString(name.toString());
 		} else if (serializer.equals(StringSerializer.class) || serializer.equals(String.class)) {
 			type = (T) name;
 		} else if (serializer.equals(LongSerializer.class) || serializer.equals(Long.class)) {
@@ -290,7 +290,7 @@ public class Column<N, V> implements Savable {
 
 	/**
 	 * The serializer to be used on this column's name
-	 * @param s 
+	 * @param s
 	 */
 	public final void setNameSerializer(Serializer s) {
 		namese = s;
@@ -298,7 +298,7 @@ public class Column<N, V> implements Savable {
 
 	/**
 	 * The serializer to be used on this column's value
-	 * @param s 
+	 * @param s
 	 */
 	public final void setValueSerializer(Serializer s) {
 		valuese = s;
